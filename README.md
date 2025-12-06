@@ -1,124 +1,73 @@
-# IoT IDS Evasion Attacks
+## Stratified Sample Used in This Repository
 
-This repository contains the IDS models, preprocessing pipeline, dataset samples, and adversarial evasion attacks developed for the project **“Investigating Evasion Attacks on AI-Driven Intrusion Detection Systems in IoT Environments.”**  
-The project evaluates the robustness of machine learning and deep learning-based Intrusion Detection Systems (IDS) when exposed to adversarial manipulation within IoT environments. Multiple models and attack methodologies were implemented to measure misclassification behavior, Attack Success Rate (ASR), and overall resilience.
+A stratified dataset sample, **`sample_stratified_250k_ready.csv`**, is included in this repository to support reproducible, controlled, and computationally efficient experimentation. This sample was directly derived from the **CIC IoT-DIAD 2024** dataset and prepared using a multi-stage preprocessing and cleaning pipeline to ensure high data quality for intrusion detection and adversarial attack evaluation.
 
----
+### Sample Composition and Statistics
+- **Total Records:** Approximately 250,000 flow-based samples  
+- **Original Features:** 83  
+- **Features After Preprocessing:** 73  
+- **Data Type:** Flow-level tabular network telemetry  
+- **Included Classes:** Benign traffic + 14 IoT attack categories  
+- **Attack Types Represented:**  
+  - DoS SYN Flood  
+  - DoS UDP Flood  
+  - DDoS  
+  - ICMP Flood  
+  - ICMP Fragmentation  
+  - Mirai  
+  - DNS Spoofing  
+  - SQL Injection  
+  - XSS  
+  - Brute Force  
+  - Web-Based attacks  
+  - Additional IoT-targeted attacks from the CIC IoT-DIAD 2024 dataset  
 
-## Dataset Information
+The sample preserves the natural imbalance found in IoT environments, where volumetric attacks such as DoS/DDoS dominate the traffic, while more complex attack categories appear in smaller volumes. This makes the sample highly representative of real-world IoT intrusion behavior.
 
-### Primary Dataset: CIC IoT-DIAD 2024  
-All experiments in this project are based on the **CIC IoT-DIAD 2024 dataset**, provided by the Canadian Institute for Cybersecurity (CIC).  
-Dataset link: https://www.unb.ca/cic/datasets/iot-diad-2024.html  
+### Preprocessing and Cleaning Procedures
+The sample was subjected to an extensive preprocessing workflow to improve data quality and model compatibility:
 
-This dataset offers flow-level IoT traffic containing both benign behavior and a wide variety of cyberattacks across multiple IoT devices. It provides 83 statistical network features per flow and is widely used for research on intrusion detection and IoT security.
+1. **Removal of Identifier Columns**  
+   Columns such as:
+   - Flow ID  
+   - Source/Destination IP  
+   - Timestamps  
+   - Internal dataset tracking fields  
+   were removed because they do not provide meaningful learning value and may introduce bias.
 
-### Stratified Sample Used in This Repository  
-A stratified dataset sample, **`sample_stratified_250k_ready.csv`**, is included in the repository to enable reproducible experimentation and reduce computational overhead.
+2. **Feature Reduction and Deduplication**  
+   - Redundant or highly correlated features were eliminated (e.g., Packet Length Mean, Flow Bytes/s).  
+   - Duplicate flows were detected using more than **70 flow-level attributes**, ensuring strict duplicate removal.  
+   - Only **six exact duplicates** were identified and removed, indicating high dataset integrity.
 
-**Sample Characteristics:**  
-- Total samples: approximately 250,000 flows  
-- Original features: 83  
-- Features after preprocessing: 73  
-- Contains 14 attack categories + benign flows  
-- Flow-level tabular IoT telemetry extracted from CIC IoT-DIAD 2024  
+3. **Validation of Missing Values**  
+   - All numerical columns were validated to contain **zero missing values** after cleaning.  
+   - Ensures consistent model input and avoids unintended distortions in adversarial attack behavior.
 
-**Preprocessing Performed:**  
-- Removal of identifiers (Flow ID, IP addresses, timestamps)  
-- Removal of redundant or highly correlated features  
-- Verification of zero missing values across all numerical attributes  
-- Duplicate detection using more than 70 flow characteristics (only six exact duplicates removed)  
-- Outliers preserved to maintain real-world attack behavior patterns  
+4. **Retention of Relevant Outliers**  
+   - Extreme values (e.g., high packet counts, long flow durations) were preserved because they reflect realistic attack behaviors, especially in DoS/DDoS contexts.
 
-This stratified sample was used for training all IDS models and performing adversarial attacks (FGSM, PGD, Boundary, Hybrid, Surrogate-guided).
+5. **Column Standardization**  
+   - Final cleaned dataset maintains 73 informative features across flow statistics, timing, protocol behavior, flags, activity/idle metrics, and subflow information.
 
----
+### Purpose of the Sample
+This stratified sample is used throughout the repository for:
 
-## IDS Models Implemented
-- Random Forest (RF)  
-- XGBoost  
-- 1D-Convolutional Neural Network (1D-CNN)  
-- Long Short-Term Memory Network (LSTM)
+- **Training all IDS models** (RF, XGBoost, 1D-CNN, LSTM)  
+- **Executing adversarial attacks**, including:  
+  - FGSM  
+  - PGD  
+  - Boundary Attack  
+  - Hybrid Evolutionary Attack  
+  - Surrogate-based attacks  
+- **Ensuring reproducible experimental conditions** across all models and attack methods  
+- **Reducing computational cost** compared to the full CIC IoT-DIAD dataset (which contains millions of flows)  
+- **Providing a standardized benchmark** for evaluating model robustness under adversarial conditions  
 
-Models were trained using IoT tabular traffic samples and evaluated on both clean and adversarial inputs.
+### Why This Sample Was Selected
+- It maintains **real-world IoT traffic distributions**, including heavy attack dominance and diverse feature behavior.  
+- It allows **efficient experimentation** on limited hardware while preserving statistical representativeness.  
+- It ensures that all IDS models and attack methods operate on the **exact same input distribution**, enabling fair comparison.  
+- It retains all important behavioral patterns (packet sizes, flow durations, idle/active times, protocol differences) necessary for model interpretability and adversarial sensitivity analysis.
 
----
-
-## Adversarial Attack Methods
-
-### 1- Fast Gradient Sign Method (FGSM)
-Implemented based on:  
-**Sorensen et al., “Adversarial Evasion Attacks on OCC-Based Machine Learning Intrusion Detection Systems in the Internet of Things,” SATC 2025.**
-
----
-
-### 2- Projected Gradient Descent (PGD)
-Adopted as an iterative extension of FGSM using the foundational framework described by:  
-**Sorensen et al., SATC 2025.**
-
-PGD was additionally applied to non-differentiable models using surrogate-guided attacks.
-
----
-
-### 3- Boundary Attack (Black-Box, Decision-Based)
-Implemented following:  
-**Kazoom et al., “Boundary on the Table: Efficient Black-Box Decision-Based Attacks for Structured Data,” 2025.**
-
----
-
-### 4- Hybrid Evolutionary Attack (SIGMA-Like)
-Inspired by the metaheuristic adversarial generation approach:  
-**Msika et al., “SIGMA: Strengthening IDS with GAN and Metaheuristics Attacks,” 2019.**
-
-A computationally efficient hybrid variant was developed using mutation, selection, and local-search operators.
-
----
-
-### 5- Surrogate-Guided Attacks for Black-Box Models
-To enable gradient-based attacks on non-differentiable models, an MLP surrogate was trained to approximate the target classifier, following:  
-**Asimopoulos et al., “Surrogate-Guided Adversarial Attacks: Enabling White-Box Methods in Black-Box Scenarios,” 2024.**
-
----
-
-### 6- Additional FGSM/Black-Box Reference
-General IDS adversarial evaluation and FGSM usage informed by:  
-**Barik & Misra, “IDS-Anta: An Open-Source Code with a Defense Mechanism to Detect Adversarial Attacks for Intrusion Detection Systems,” Software Impacts 2024.**
-
----
-
-## Repository Structure
-`/models` → Trained IDS models  
-`/EDA-Samples` → Dataset samples for training and adversarial attacks  
-`/attacks` → FGSM, PGD, Boundary, and Hybrid attack implementations  
-`/evaluation` → ASR calculations, confusion matrices, metrics  
-
----
-
-## Project Objectives
-- Assess adversarial robustness of classical and deep IDS models  
-- Compare white-box, black-box, and surrogate-guided attack performance  
-- Quantify ASR, accuracy degradation, and feature sensitivity  
-- Provide reproducible pipelines for IoT adversarial security research  
-
----
-
-## How to Use
-1. Install project dependencies  
-2. Load dataset samples and preprocess them  
-3. Train an IDS model or load pre-trained models  
-4. Execute an adversarial attack script of choice  
-5. Review evaluation outputs in `/evaluation`  
-
----
-
-## References
-1. Sorensen, D. L., Baza, M., Badr, M. M., & Salman, T. (2025).  
-2. Kazoom, R., Ratzabi, Y., Rothstein, E., & Hadar, O. (2025).  
-3. Msika, S., Quintero, A., & Khomh, F. (2019).  
-4. Asimopoulos, D. C., et al. (2024).  
-5. Barik, K., & Misra, S. (2024).  
-
----
-
-## License
-Distributed under the MIT License.
+This sample serves as the **central dataset** for the entire adversarial evaluation pipeline in this project.
