@@ -5,7 +5,36 @@ The project evaluates the robustness of machine learning and deep learning-based
 
 ---
 
-##  IDS Models Implemented
+## Dataset Information
+
+### Primary Dataset: CIC IoT-DIAD 2024  
+All experiments in this project are based on the **CIC IoT-DIAD 2024 dataset**, provided by the Canadian Institute for Cybersecurity (CIC).  
+Dataset link: https://www.unb.ca/cic/datasets/iot-diad-2024.html  
+
+This dataset offers flow-level IoT traffic containing both benign behavior and a wide variety of cyberattacks across multiple IoT devices. It provides 83 statistical network features per flow and is widely used for research on intrusion detection and IoT security.
+
+### Stratified Sample Used in This Repository  
+A stratified dataset sample, **`sample_stratified_250k_ready.csv`**, is included in the repository to enable reproducible experimentation and reduce computational overhead.
+
+**Sample Characteristics:**  
+- Total samples: approximately 250,000 flows  
+- Original features: 83  
+- Features after preprocessing: 73  
+- Contains 14 attack categories + benign flows  
+- Flow-level tabular IoT telemetry extracted from CIC IoT-DIAD 2024  
+
+**Preprocessing Performed:**  
+- Removal of identifiers (Flow ID, IP addresses, timestamps)  
+- Removal of redundant or highly correlated features  
+- Verification of zero missing values across all numerical attributes  
+- Duplicate detection using more than 70 flow characteristics (only six exact duplicates removed)  
+- Outliers preserved to maintain real-world attack behavior patterns  
+
+This stratified sample was used for training all IDS models and performing adversarial attacks (FGSM, PGD, Boundary, Hybrid, Surrogate-guided).
+
+---
+
+## IDS Models Implemented
 - Random Forest (RF)  
 - XGBoost  
 - 1D-Convolutional Neural Network (1D-CNN)  
@@ -15,7 +44,7 @@ Models were trained using IoT tabular traffic samples and evaluated on both clea
 
 ---
 
-##  Adversarial Attack Methods
+## Adversarial Attack Methods
 
 ### 1- Fast Gradient Sign Method (FGSM)
 Implemented based on:  
@@ -24,7 +53,7 @@ Implemented based on:
 ---
 
 ### 2- Projected Gradient Descent (PGD)
-Adopted as an iterative extension of FGSM using the same foundational framework described by:  
+Adopted as an iterative extension of FGSM using the foundational framework described by:  
 **Sorensen et al., SATC 2025.**
 
 PGD was additionally applied to non-differentiable models using surrogate-guided attacks.
@@ -41,7 +70,7 @@ Implemented following:
 Inspired by the metaheuristic adversarial generation approach:  
 **Msika et al., “SIGMA: Strengthening IDS with GAN and Metaheuristics Attacks,” 2019.**
 
-A computationally efficient hybrid version was developed using mutation, selection, and local-search operators.
+A computationally efficient hybrid variant was developed using mutation, selection, and local-search operators.
 
 ---
 
@@ -57,19 +86,15 @@ General IDS adversarial evaluation and FGSM usage informed by:
 
 ---
 
-##  Repository Structure
-`/models` → Trained IDS models
-
-`/samples` → Dataset samples for training & attacks
-
-`/attacks` → FGSM, PGD, Boundary, Hybrid on the madles
-
-`/evaluation` → ASR calculations, confusion matrices, metrics
-
+## Repository Structure
+`/models` → Trained IDS models  
+`/EDA-Samples` → Dataset samples for training and adversarial attacks  
+`/attacks` → FGSM, PGD, Boundary, and Hybrid attack implementations  
+`/evaluation` → ASR calculations, confusion matrices, metrics  
 
 ---
 
-##  Project Objectives
+## Project Objectives
 - Assess adversarial robustness of classical and deep IDS models  
 - Compare white-box, black-box, and surrogate-guided attack performance  
 - Quantify ASR, accuracy degradation, and feature sensitivity  
@@ -77,7 +102,7 @@ General IDS adversarial evaluation and FGSM usage informed by:
 
 ---
 
-##  How to Use
+## How to Use
 1. Install project dependencies  
 2. Load dataset samples and preprocess them  
 3. Train an IDS model or load pre-trained models  
@@ -86,7 +111,7 @@ General IDS adversarial evaluation and FGSM usage informed by:
 
 ---
 
-##  References
+## References
 1. Sorensen, D. L., Baza, M., Badr, M. M., & Salman, T. (2025).  
 2. Kazoom, R., Ratzabi, Y., Rothstein, E., & Hadar, O. (2025).  
 3. Msika, S., Quintero, A., & Khomh, F. (2019).  
@@ -95,5 +120,5 @@ General IDS adversarial evaluation and FGSM usage informed by:
 
 ---
 
-##  License
-Distributed under the **MIT License**.
+## License
+Distributed under the MIT License.
