@@ -1,104 +1,137 @@
 # Adversarial Attack Methods Implemented
 
-This project implements four major evasion attacks derived exclusively from the referenced research papers.  
-Each attack was adapted to tabular IoT network traffic and evaluated on classical and deep learning IDS models.
+This project implements four adversarial evasion attacks adapted from peer-reviewed research.  
+Each method was selected based on its relevance, strength, and applicability to Intrusion Detection Systems (IDS) operating in IoT environments.  
+The IDS literature consistently demonstrates that both gradient-based and gradient-free attacks expose severe vulnerabilities in ML-driven security systems.  
+Accordingly, we implemented complementary attack categories: **white-box**, **black-box**, and **metaheuristic** evasion methods.
 
 ---
 
 ## 1. Fast Gradient Sign Method (FGSM)
 
-**Reference basis:**  
-- FGSM-FOR-IDS  
+**Reference Basis:**  
+- *FGSM-FOR-IDS*  
 - *Adversarial Evasion Attacks on OCC-Based ML IDS in IoT (SATC 2025)*  
 
-FGSM is a white-box, single-step gradient-based attack that perturbs each feature in the direction that maximizes the model loss.  
-The referenced works demonstrate that IoT IDS systems are highly sensitive to small linear perturbations.
+**Description:**  
+FGSM is a single-step gradient attack that perturbs the input in the direction that most increases the model’s loss. It is widely used in IDS research as a baseline adversarial method.
 
-**Formulation:**
+**Why This Attack Was Used:**  
+- It is the simplest yet most widely adopted adversarial method.  
+- It provides a controlled, interpretable baseline for evaluating vulnerability.  
+- Fast to compute for large-scale IoT datasets.  
+- It is used across multiple IDS research papers, making results comparable.
+
+**Why FGSM Is Strong:**  
+- Even minimal perturbations can significantly degrade IDS performance.  
+- Deep learning models (CNN/LSTM) are highly sensitive to linear gradient changes.  
+
+**Mathematical Form:**  
 \[
 x_{\text{adv}} = x + \epsilon \cdot \text{sign}(\nabla_x J(\theta, x, y))
 \]
-
-**Key points:**
-- Very fast to compute  
-- Causes significant drops in accuracy for deep models  
-- Used as a baseline attack  
-- Applied directly to differentiable models and via surrogate for RF/XGBoost  
 
 ---
 
 ## 2. Projected Gradient Descent (PGD)
 
-**Reference basis:**  
-- SATC 2025 OCC attack paper  
-- *Model Evasion Attack on IDS using Adversarial Machine Learning*
+**Reference Basis:**  
+- *SATC 2025 OCC IDS attack model*  
+- *Model Evasion Attack on IDS Using Adversarial Machine Learning*
 
-PGD extends FGSM by applying multiple iterative perturbations while projecting back into the allowed perturbation region.  
-The cited papers report PGD as the most effective gradient-based attack for IDS systems, frequently yielding near-complete evasion.
+**Description:**  
+PGD is an iterative extension of FGSM. It repeatedly applies small gradient steps and projects the sample back into the allowed perturbation region.
 
-**Update rule:**
+**Why This Attack Was Used:**  
+- Cited in the literature as the **most powerful first-order attack**.  
+- Provides a rigorous evaluation of system robustness.  
+- Allows testing model resilience under stronger and more realistic manipulations.  
+- Works with surrogate models, allowing application to RF/XGBoost.
+
+**Why PGD Is Strong:**  
+- Iterative refinements provide significantly higher Attack Success Rates (ASR).  
+- Has been shown in IDS studies to collapse classifier accuracy almost completely.
+
+**Update Rule:**  
 \[
 x^{t+1} = \Pi_{\epsilon}(x^t + \alpha \cdot \text{sign}(\nabla_x J(x^t, y)))
 \]
-
-**Key points:**
-- Stronger and more realistic than FGSM  
-- Achieves high ASR across IoT datasets  
-- Can collapse model performance under white-box assumptions  
-- Surrogate-guided version used for RF/XGBoost  
 
 ---
 
 ## 3. Boundary Attack (Black-Box, Decision-Based)
 
-**Reference basis:**  
+**Reference Basis:**  
 - *Boundary on the Table: Efficient Black-Box Decision-Based Attacks for Structured Data (Kazoom et al., 2025)*
 
-This attack requires only **class labels**, not gradients or probabilities.  
-The referenced work proposes a SHAP-guided decision-based boundary exploration specifically for tabular structures, making it ideal for IoT traffic data.
+**Description:**  
+A gradient-free attack that requires only model decisions (predicted labels).  
+It uses feature ranking (via SHAP in the reference work) and binary search steps to move the sample toward the decision boundary.
 
-**Core steps from the paper:**
-1. Start from a misclassified sample or move toward the boundary  
-2. Use SHAP to rank sensitive features  
-3. Apply iterative perturbation toward the decision boundary  
-4. Use binary search to minimize perturbation magnitude  
+**Why This Attack Was Used:**  
+- Realistic for IoT environments where the attacker does not know internals of the IDS.  
+- Works effectively for tree models and deep learning models alike.  
+- Represents the **black-box attack scenario** required by many security standards.
 
-**Key points:**
-- Completely black-box  
-- Effective for tree models and deep models  
-- Mimics realistic attacker capabilities in IoT environments  
+**Why Boundary Attack Is Strong:**  
+- Does not need gradients or probability outputs.  
+- Extremely challenging for IDS to defend because the model cannot detect gradient direction.  
+- Effective even on well-regularized models like XGBoost.
+
+**Core Process:**  
+1. Initialize from or move toward a misclassified point.  
+2. Rank influential features.  
+3. Apply directional perturbations toward the decision boundary.  
+4. Compress perturbations via binary search.  
 
 ---
 
 ## 4. Hybrid Evolutionary Attack (Metaheuristic / Genetic)
 
-**Reference basis:**  
-- *Model Evasion Attack on Intrusion Detection Systems using Adversarial Machine Learning*
+**Reference Basis:**  
+- *Model Evasion Attack on Intrusion Detection Systems Using Adversarial Machine Learning*
 
-This attack uses evolutionary optimization to generate adversarial examples without requiring gradients.  
-It is particularly effective for non-differentiable models like Random Forest and XGBoost.
+**Description:**  
+A gradient-free attack using principles of evolutionary optimization.  
+It mutates non-functional features, evaluates fitness based on misclassification probability, and selects best candidates across generations.
 
-**Mechanism:**
+**Why This Attack Was Used:**  
+- Gradient-free model needed for RF and XGBoost.  
+- Captures non-linear interactions that gradient-based attacks miss.  
+- Evaluates IDS robustness under **optimization-driven adversaries**, which are highly realistic in IoT botnet contexts.  
+- Paper demonstrates strong evasion even under strict feature constraints.
+
+**Why It Is Strong:**  
+- Able to bypass models that do not expose gradients.  
+- Can explore wide perturbation spaces not reachable by PGD/FGSM.  
+- Maintains validity by modifying only non-functional features.
+
+**Mechanism:**  
 - Population initialization  
-- Mutation of non-functional features  
+- Mutation of selected features  
 - Selection based on misclassification probability  
-- Iterative improvement across generations  
-
-**Key points:**
-- Gradient-free  
-- Effective for black-box or hard-to-differentiate models  
-- Preserves functional (behavioral) feature constraints  
-- Reduced population size and generations used for computational efficiency  
+- Iterative refinement until convergence  
 
 ---
 
-# Summary Table
+# Summary of Attack Roles and Strengths
 
-| Attack Method | Access Required | Type | Why Included |
-|---------------|----------------|------|--------------|
-| FGSM | Gradients | White-box | Fast baseline attack used in IDS literature |
-| PGD | Gradients | White-box (strong) | High ASR; strongest iterative gradient attack |
-| Boundary | Labels only | Black-box | Realistic IoT threat scenario; SHAP-guided |
-| Hybrid Evolutionary | No gradients | Evolutionary / Metaheuristic | Effective on RF/XGBoost and gradient-free models |
+| Attack | Access Level | Strength | Why Included |
+|--------|--------------|----------|--------------|
+| **FGSM** | White-box | Fast, high baseline impact | Standard IDS benchmark; measures gradient sensitivity |
+| **PGD** | White-box (iterative) | Strongest first-order attack | Tests worst-case vulnerability; used in literature as the main adversarial baseline |
+| **Boundary** | Black-box, labels only | Realistic attacker model | Works on non-differentiable models; strong for structured tabular data |
+| **Hybrid Evolutionary** | Gradient-free | Optimization-driven bypass | Designed for tree models; replicates attacker search behavior |
 
-All attack implementations are directly grounded in the referenced academic papers and adapted for tabular IoT traffic.
+---
+
+# Why We Selected These Attacks for the Project
+
+The four attacks together provide **comprehensive evasion coverage**:
+
+- **FGSM + PGD** evaluate how gradient-sensitive the IDS is.  
+- **Boundary Attack** assesses robustness in realistic black-box deployments.  
+- **Hybrid Evolutionary Attack** evaluates non-differentiable, ensemble-based IDS models.  
+
+This aligns with the referenced research, which highlights that IoT IDS systems must be tested under **multiple adversarial threat models** to accurately measure robustness.
+
