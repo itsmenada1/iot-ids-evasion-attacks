@@ -1,124 +1,91 @@
-# IoT IDS Evasion Attacks
+## Academic Basis for the Evaluation Module
 
-This repository contains the IDS models, preprocessing pipeline, dataset samples, and adversarial evasion attacks developed for the project **“Investigating Evasion Attacks on AI-Driven Intrusion Detection Systems in IoT Environments.”**  
-The project evaluates the robustness of machine learning and deep learning-based Intrusion Detection Systems (IDS) when exposed to adversarial manipulation within IoT environments. Multiple models and attack methodologies were implemented to measure misclassification behavior, Attack Success Rate (ASR), and overall resilience.
+The evaluation framework implemented in this project is grounded in the metrics, analysis methods, and adversarial success criteria discussed across the following three research studies:
 
----
+- *Enhancing IDS Performance Through a Comparative Analysis of Random Forest, XGBoost, and Deep Neural Networks* (2023)  
+- *Mitigating Adversarial and AI-Evasion Attacks in Cybersecurity: Challenges and Strategies* (2023)  
+- *Model Evasion Attack on Intrusion Detection Systems Using Adversarial Machine Learning* (2020)
 
-## Dataset Information
+Although each study approaches IDS robustness from a different technical perspective, they collectively establish a consistent set of evaluation metrics and evasion-success indicators that our unified module operationalizes.
 
-### Primary Dataset: CIC IoT-DIAD 2024  
-All experiments in this project are based on the **CIC IoT-DIAD 2024 dataset**, provided by the Canadian Institute for Cybersecurity (CIC).  
-Dataset link: https://www.unb.ca/cic/datasets/iot-diad-2024.html  
+### 1. Core Performance Metrics
 
-This dataset offers flow-level IoT traffic containing both benign behavior and a wide variety of cyberattacks across multiple IoT devices. It provides 83 statistical network features per flow and is widely used for research on intrusion detection and IoT security.
+Across the three references, the following metrics serve as the primary indicators of IDS classification quality:
 
-### Stratified Sample Used in This Repository  
-A stratified dataset sample, **`sample_stratified_250k_ready.csv`**, is included in the repository to enable reproducible experimentation and reduce computational overhead.
+- **Accuracy** – Measures overall correctness.  
+- **Precision** – Indicates the reliability of positive (attack) predictions.  
+- **Recall** – Reflects the IDS’s ability to detect all actual attack samples.  
+- **F1-score** – A balanced harmonic mean of precision and recall, used extensively when traffic is imbalanced.  
 
-**Sample Characteristics:**  
-- Total samples: approximately 250,000 flows  
-- Original features: 83  
-- Features after preprocessing: 73  
-- Contains 14 attack categories + benign flows  
-- Flow-level tabular IoT telemetry extracted from CIC IoT-DIAD 2024  
+These metrics form the baseline for comparing clean vs. adversarial performance.
 
-**Preprocessing Performed:**  
-- Removal of identifiers (Flow ID, IP addresses, timestamps)  
-- Removal of redundant or highly correlated features  
-- Verification of zero missing values across all numerical attributes  
-- Duplicate detection using more than 70 flow characteristics (only six exact duplicates removed)  
-- Outliers preserved to maintain real-world attack behavior patterns  
+### 2. Inclusion of AUC for Normal vs. Attack Separation
 
-This stratified sample was used for training all IDS models and performing adversarial attacks (FGSM, PGD, Boundary, Hybrid, Surrogate-guided).
+Both adversarial-attack and IDS-benchmarking literature highlight **AUC** as a valuable metric for assessing whether adversarial samples cause malicious traffic to gain higher “Benign” probability.
 
----
+Our module therefore supports:
+- **Clean AUC**
+- **Adversarial AUC**
+- **AUC shift**, used as an indicator of the model’s vulnerability to evasion.
 
-## IDS Models Implemented
-- Random Forest (RF)  
-- XGBoost  
-- 1D-Convolutional Neural Network (1D-CNN)  
-- Long Short-Term Memory Network (LSTM)
+This aligns with the treatment of ROC-based evaluation discussed in the mitigation and robustness paper.
 
-Models were trained using IoT tabular traffic samples and evaluated on both clean and adversarial inputs.
+### 3. Attack-Specific Metrics (ASR)
 
----
+Following the adversarial-machine-learning study, our evaluation module incorporates:
 
-## Adversarial Attack Methods
+- **Attack Success Rate (ASR)**  
+  Defined as the proportion of adversarial samples whose predicted class changes in a direction favorable to evasion (e.g., Attack → Benign).
 
-### 1- Fast Gradient Sign Method (FGSM)
-Implemented based on:  
-**Sorensen et al., “Adversarial Evasion Attacks on OCC-Based Machine Learning Intrusion Detection Systems in the Internet of Things,” SATC 2025.**
+ASR is a central, explicit measure of evasion effectiveness in the literature and provides a direct quantification of how severe the performance degradation is.
 
----
+### 4. Clean vs. Adversarial Comparison Framework
 
-### 2- Projected Gradient Descent (PGD)
-Adopted as an iterative extension of FGSM using the foundational framework described by:  
-**Sorensen et al., SATC 2025.**
+All three references emphasize *comparative evaluation*, not isolated metric reporting.  
+To match this methodology, the module computes:
 
-PGD was additionally applied to non-differentiable models using surrogate-guided attacks.
+- Metric tables for both conditions  
+- Delta-drop analysis (Clean − Adversarial)  
+- Side-by-side confusion matrices  
+- Class-level performance degradation  
 
----
+This reflects academic practice in assessing adversarial robustness by measuring not only accuracy loss but also structural changes in error distribution.
 
-### 3- Boundary Attack (Black-Box, Decision-Based)
-Implemented following:  
-**Kazoom et al., “Boundary on the Table: Efficient Black-Box Decision-Based Attacks for Structured Data,” 2025.**
+### 5. Confusion Matrix Interpretation
 
----
+Prior studies show that misclassification patterns—not only aggregated metrics—are essential to understanding attack behavior.  
+Therefore, the module automatically generates:
 
-### 4- Hybrid Evolutionary Attack (SIGMA-Like)
-Inspired by the metaheuristic adversarial generation approach:  
-**Msika et al., “SIGMA: Strengthening IDS with GAN and Metaheuristics Attacks,” 2019.**
+- A normalized clean confusion matrix  
+- A normalized adversarial confusion matrix  
 
-A computationally efficient hybrid variant was developed using mutation, selection, and local-search operators.
+allowing visual inspection of how traffic distribution shifts under attack pressure.
 
----
+### 6. Justification for the Unified Evaluation Design
 
-### 5- Surrogate-Guided Attacks for Black-Box Models
-To enable gradient-based attacks on non-differentiable models, an MLP surrogate was trained to approximate the target classifier, following:  
-**Asimopoulos et al., “Surrogate-Guided Adversarial Attacks: Enabling White-Box Methods in Black-Box Scenarios,” 2024.**
+The evaluation functions implemented here were designed to satisfy three academic requirements drawn directly from the referenced papers:
 
----
+1. **Performance Stability Analysis**  
+   – As used in IDS benchmark studies.  
+2. **Adversarial Impact Quantification**  
+   – Emphasized in evasion-attack research.  
+3. **Detection-Capability Degradation Measurement**  
+   – Discussed in cybersecurity mitigation literature.
 
-### 6- Additional FGSM/Black-Box Reference
-General IDS adversarial evaluation and FGSM usage informed by:  
-**Barik & Misra, “IDS-Anta: An Open-Source Code with a Defense Mechanism to Detect Adversarial Attacks for Intrusion Detection Systems,” Software Impacts 2024.**
+Our module integrates these ideas into one standardized pipeline that computes:
 
----
+- Clean vs. adversarial accuracy  
+- Weighted precision, recall, and F1  
+- AUC shifts  
+- ASR  
+- Per-class scoring  
+- Confusion matrix deviation  
+- Visual performance comparison  
+- Optional exportable artifacts (CSV, Excel, JSON, PNG)
 
-## Repository Structure
-`/models` → Trained IDS models  
-`/EDA-Samples` → Dataset samples for training and adversarial attacks  
-`/attacks` → FGSM, PGD, Boundary, and Hybrid attack implementations  
-`/evaluation` → ASR calculations, confusion matrices, metrics  
+This ensures the evaluation results produced in the project are academically interpretable and consistent with published methodologies.
 
----
+### 7. Summary
 
-## Project Objectives
-- Assess adversarial robustness of classical and deep IDS models  
-- Compare white-box, black-box, and surrogate-guided attack performance  
-- Quantify ASR, accuracy degradation, and feature sensitivity  
-- Provide reproducible pipelines for IoT adversarial security research  
-
----
-
-## How to Use
-1. Install project dependencies  
-2. Load dataset samples and preprocess them  
-3. Train an IDS model or load pre-trained models  
-4. Execute an adversarial attack script of choice  
-5. Review evaluation outputs in `/evaluation`  
-
----
-
-## References
-1. Sorensen, D. L., Baza, M., Badr, M. M., & Salman, T. (2025).  
-2. Kazoom, R., Ratzabi, Y., Rothstein, E., & Hadar, O. (2025).  
-3. Msika, S., Quintero, A., & Khomh, F. (2019).  
-4. Asimopoulos, D. C., et al. (2024).  
-5. Barik, K., & Misra, S. (2024).  
-
----
-
-## License
-Distributed under the MIT License.
+These three references collectively define the theoretical foundation for evaluating IDS robustness under adversarial settings.  
+The evaluation module used in this repository is therefore a direct operationalization of the metrics and criteria consistently applied in these studies, allowing reliable, academically defensible assessment of evasion attacks against IoT-focused IDS models.
